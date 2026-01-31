@@ -9,66 +9,37 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var viewModel = BLEMIDIViewModel()
+    @State private var showBluetoothSheet = false
 
     var body: some View {
-        VStack(spacing: 32) {
-            // Status indicator
-            VStack(spacing: 8) {
-                Image(systemName: statusIcon)
-                    .font(.system(size: 48))
-                    .foregroundStyle(statusColor)
+        NavigationStack {
+            VStack(spacing: 32) {
+                // CC Slider
+                VStack(spacing: 8) {
+                    Text("CC Value: \(Int(viewModel.ccValue))")
+                        .font(.subheadline)
+                        .monospacedDigit()
 
-                Text(viewModel.statusText)
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
+                    Slider(value: $viewModel.ccValue, in: 0...127, step: 1)
+                        .disabled(!viewModel.isConnected)
+                }
+
+                Spacer()
             }
-
-            Divider()
-
-            // Advertising toggle
-            Toggle("Advertise", isOn: Binding(
-                get: { viewModel.isAdvertising },
-                set: { _ in viewModel.toggleAdvertising() }
-            ))
-            .toggleStyle(.switch)
-            .disabled(!viewModel.isBluetoothReady)
-
-            // CC Slider
-            VStack(spacing: 8) {
-                Text("CC Value: \(Int(viewModel.ccValue))")
-                    .font(.subheadline)
-                    .monospacedDigit()
-
-                Slider(value: $viewModel.ccValue, in: 0...127, step: 1)
-                    .disabled(!viewModel.isConnected)
+            .padding(24)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showBluetoothSheet = true
+                    } label: {
+                        Image(systemName: viewModel.statusIcon)
+                            .foregroundStyle(viewModel.statusColor)
+                    }
+                }
             }
-
-            Spacer()
-        }
-        .padding(24)
-    }
-
-    private var statusIcon: String {
-        if viewModel.isConnected {
-            return "link.circle.fill"
-        } else if viewModel.isAdvertising {
-            return "antenna.radiowaves.left.and.right"
-        } else if viewModel.isBluetoothReady {
-            return "dot.radiowaves.left.and.right"
-        } else {
-            return "exclamationmark.triangle"
-        }
-    }
-
-    private var statusColor: Color {
-        if viewModel.isConnected {
-            return .green
-        } else if viewModel.isAdvertising {
-            return .blue
-        } else if viewModel.isBluetoothReady {
-            return .primary
-        } else {
-            return .red
+            .sheet(isPresented: $showBluetoothSheet) {
+                BluetoothConnectionSheet(viewModel: viewModel)
+            }
         }
     }
 }

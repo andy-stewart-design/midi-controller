@@ -5,6 +5,7 @@
 
 import CoreBluetooth
 import Foundation
+import SwiftUI
 
 /// ViewModel that bridges BLE MIDI manager to SwiftUI
 @Observable
@@ -12,8 +13,12 @@ import Foundation
 final class BLEMIDIViewModel {
 
     private(set) var isAdvertising = false
-    private(set) var isConnected = false
+    private(set) var connectionCount = 0
     private(set) var bluetoothState: CBManagerState = .unknown
+
+    var isConnected: Bool {
+        connectionCount > 0
+    }
 
     var ccValue: Double = 0 {
         didSet {
@@ -48,6 +53,34 @@ final class BLEMIDIViewModel {
         }
     }
 
+    var statusIcon: String {
+        if isConnected {
+            return "link"
+        } else if isAdvertising {
+            return "dot.radiowaves.left.and.right"
+        } else if isBluetoothReady {
+            return "dot.radiowaves.left.and.right"
+        } else {
+            return "exclamationmark.triangle"
+        }
+    }
+
+    var statusColor: Color {
+        if isConnected {
+            return .green
+        } else if isAdvertising {
+            return .blue
+        } else if isBluetoothReady {
+            return .primary
+        } else {
+            return .red
+        }
+    }
+
+    var connectionCountText: String {
+        "\(connectionCount) \(connectionCount == 1 ? "Device" : "Devices")"
+    }
+
     init() {
         bleManager = BLEMIDIPeripheralManager()
         bleManager.delegate = self
@@ -57,7 +90,7 @@ final class BLEMIDIViewModel {
         if isAdvertising {
             bleManager.stopAdvertising()
             isAdvertising = false
-            isConnected = false
+            connectionCount = 0
         } else {
             bleManager.startAdvertising()
         }
@@ -87,15 +120,15 @@ extension BLEMIDIViewModel: BLEMIDIPeripheralManagerDelegate {
         }
     }
 
-    nonisolated func peripheralManagerDidConnect() {
+    nonisolated func peripheralManagerDidConnect(_ device: ConnectedDevice) {
         Task { @MainActor in
-            self.isConnected = true
+            self.connectionCount += 1
         }
     }
 
-    nonisolated func peripheralManagerDidDisconnect() {
+    nonisolated func peripheralManagerDidDisconnect(_ device: ConnectedDevice) {
         Task { @MainActor in
-            self.isConnected = false
+            self.connectionCount = max(0, self.connectionCount - 1)
         }
     }
 }
