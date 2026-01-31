@@ -26,6 +26,9 @@ final class BLEMIDIViewModel {
         }
     }
 
+    var ccLabelName: String = "CC Value"
+    var ccChannel: Int = 1
+
     private let bleManager: BLEMIDIPeripheralManager
 
     var isBluetoothReady: Bool {
@@ -99,7 +102,8 @@ final class BLEMIDIViewModel {
     private func sendControlChange() {
         guard isConnected else { return }
         let value = UInt8(min(127, max(0, Int(ccValue))))
-        let packet = MIDIPacket.controlChange(channel: 0, controller: 1, value: value)
+        let channel = UInt8(min(15, max(0, ccChannel - 1)))
+        let packet = MIDIPacket.controlChange(channel: channel, controller: 1, value: value)
         bleManager.sendMIDIMessage(packet)
     }
 }
