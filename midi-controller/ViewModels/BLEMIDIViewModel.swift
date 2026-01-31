@@ -13,8 +13,12 @@ import SwiftUI
 final class BLEMIDIViewModel {
 
     private(set) var isAdvertising = false
-    private(set) var isConnected = false
+    private(set) var connectionCount = 0
     private(set) var bluetoothState: CBManagerState = .unknown
+
+    var isConnected: Bool {
+        connectionCount > 0
+    }
 
     var ccValue: Double = 0 {
         didSet {
@@ -73,6 +77,10 @@ final class BLEMIDIViewModel {
         }
     }
 
+    var connectionCountText: String {
+        "\(connectionCount) \(connectionCount == 1 ? "Device" : "Devices")"
+    }
+
     init() {
         bleManager = BLEMIDIPeripheralManager()
         bleManager.delegate = self
@@ -82,7 +90,7 @@ final class BLEMIDIViewModel {
         if isAdvertising {
             bleManager.stopAdvertising()
             isAdvertising = false
-            isConnected = false
+            connectionCount = 0
         } else {
             bleManager.startAdvertising()
         }
@@ -112,15 +120,15 @@ extension BLEMIDIViewModel: BLEMIDIPeripheralManagerDelegate {
         }
     }
 
-    nonisolated func peripheralManagerDidConnect() {
+    nonisolated func peripheralManagerDidConnect(_ device: ConnectedDevice) {
         Task { @MainActor in
-            self.isConnected = true
+            self.connectionCount += 1
         }
     }
 
-    nonisolated func peripheralManagerDidDisconnect() {
+    nonisolated func peripheralManagerDidDisconnect(_ device: ConnectedDevice) {
         Task { @MainActor in
-            self.isConnected = false
+            self.connectionCount = max(0, self.connectionCount - 1)
         }
     }
 }

@@ -20,8 +20,15 @@ struct BluetoothConnectionSheet: View {
                     Text(viewModel.statusText)
                         .font(.headline)
                         .foregroundStyle(.secondary)
+
+                    Spacer()
+
+                    if viewModel.isConnected {
+                        Text(viewModel.connectionCountText)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
 
                 Divider()
 

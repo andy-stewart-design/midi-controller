@@ -6,12 +6,20 @@
 import CoreBluetooth
 import Foundation
 
+/// Represents a connected BLE central device
+struct ConnectedDevice: Identifiable {
+    let id: UUID
+    var shortIdentifier: String {
+        String(id.uuidString.prefix(8))
+    }
+}
+
 /// Delegate protocol for BLE MIDI peripheral state changes
 protocol BLEMIDIPeripheralManagerDelegate: AnyObject {
     func peripheralManagerDidUpdateState(_ state: CBManagerState)
     func peripheralManagerDidStartAdvertising(_ error: Error?)
-    func peripheralManagerDidConnect()
-    func peripheralManagerDidDisconnect()
+    func peripheralManagerDidConnect(_ device: ConnectedDevice)
+    func peripheralManagerDidDisconnect(_ device: ConnectedDevice)
 }
 
 /// Manages BLE MIDI peripheral advertising and MIDI message transmission
@@ -25,7 +33,7 @@ final class BLEMIDIPeripheralManager: NSObject {
 
     private var peripheralManager: CBPeripheralManager?
     private var midiCharacteristic: CBMutableCharacteristic?
-    private var connectedCentral: CBCentral?
+    private var connectedCentrals: [UUID: CBCentral] = [:]
     private var shouldStartAdvertising = false
 
     var bluetoothState: CBManagerState {
@@ -37,7 +45,7 @@ final class BLEMIDIPeripheralManager: NSObject {
     }
 
     var isConnected: Bool {
-        connectedCentral != nil
+        !connectedCentrals.isEmpty
     }
 
     override init() {
@@ -79,18 +87,19 @@ final class BLEMIDIPeripheralManager: NSObject {
         shouldStartAdvertising = false
         peripheralManager?.stopAdvertising()
         peripheralManager?.removeAllServices()
-        connectedCentral = nil
+        connectedCentrals.removeAll()
         midiCharacteristic = nil
     }
 
-    /// Sends a MIDI message to connected central
+    /// Sends a MIDI message to all connected centrals
     /// - Parameter data: BLE MIDI formatted data
     func sendMIDIMessage(_ data: Data) {
         guard let peripheralManager,
               let characteristic = midiCharacteristic,
-              let central = connectedCentral else { return }
+              !connectedCentrals.isEmpty else { return }
 
-        peripheralManager.updateValue(data, for: characteristic, onSubscribedCentrals: [central])
+        let centrals = Array(connectedCentrals.values)
+        peripheralManager.updateValue(data, for: characteristic, onSubscribedCentrals: centrals)
     }
 }
 
@@ -123,8 +132,9 @@ extension BLEMIDIPeripheralManager: CBPeripheralManagerDelegate {
         central: CBCentral,
         didSubscribeTo characteristic: CBCharacteristic
     ) {
-        connectedCentral = central
-        delegate?.peripheralManagerDidConnect()
+        connectedCentrals[central.identifier] = central
+        let device = ConnectedDevice(id: central.identifier)
+        delegate?.peripheralManagerDidConnect(device)
     }
 
     func peripheralManager(
@@ -132,9 +142,9 @@ extension BLEMIDIPeripheralManager: CBPeripheralManagerDelegate {
         central: CBCentral,
         didUnsubscribeFrom characteristic: CBCharacteristic
     ) {
-        if connectedCentral?.identifier == central.identifier {
-            connectedCentral = nil
-            delegate?.peripheralManagerDidDisconnect()
+        if connectedCentrals.removeValue(forKey: central.identifier) != nil {
+            let device = ConnectedDevice(id: central.identifier)
+            delegate?.peripheralManagerDidDisconnect(device)
         }
     }
 }
