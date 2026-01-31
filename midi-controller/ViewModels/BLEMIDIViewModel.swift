@@ -20,14 +20,7 @@ final class BLEMIDIViewModel {
         connectionCount > 0
     }
 
-    var ccValue: Double = 0 {
-        didSet {
-            sendControlChange()
-        }
-    }
-
-    var ccLabelName: String = "CC Value"
-    var ccChannel: Int = 1
+    var sliders: [CCSliderConfig] = [CCSliderConfig()]
 
     private let bleManager: BLEMIDIPeripheralManager
 
@@ -99,12 +92,27 @@ final class BLEMIDIViewModel {
         }
     }
 
-    private func sendControlChange() {
+    func sendControlChange(for slider: CCSliderConfig) {
         guard isConnected else { return }
-        let value = UInt8(min(127, max(0, Int(ccValue))))
-        let channel = UInt8(min(15, max(0, ccChannel - 1)))
-        let packet = MIDIPacket.controlChange(channel: channel, controller: 1, value: value)
+        let value = UInt8(min(127, max(0, Int(slider.value))))
+        let channel = UInt8(min(15, max(0, slider.channel - 1)))
+        let controller = UInt8(min(127, max(0, slider.ccNumber)))
+        let packet = MIDIPacket.controlChange(channel: channel, controller: controller, value: value)
         bleManager.sendMIDIMessage(packet)
+    }
+
+    func addSlider() {
+        let nextChannel = min(16, sliders.count + 1)
+        let newSlider = CCSliderConfig(
+            labelName: "CC Value",
+            channel: nextChannel,
+            ccNumber: 1
+        )
+        sliders.append(newSlider)
+    }
+
+    func removeSlider(id: UUID) {
+        sliders.removeAll { $0.id == id }
     }
 }
 

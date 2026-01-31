@@ -10,36 +10,36 @@ import SwiftUI
 struct ContentView: View {
     @State private var viewModel = BLEMIDIViewModel()
     @State private var showBluetoothSheet = false
-    @State private var showSliderSettings = false
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 32) {
-                // CC Slider
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("\(viewModel.ccLabelName): \(Int(viewModel.ccValue))")
-                            .font(.subheadline)
-                            .monospacedDigit()
-
-                        Spacer()
-
-                        Button {
-                            showSliderSettings = true
-                        } label: {
-                            Image(systemName: "gearshape")
-                                .foregroundStyle(.foreground)
-                                .opacity(0.6)
+            List {
+                ForEach($viewModel.sliders) { $slider in
+                    CCSliderView(
+                        slider: $slider,
+                        isConnected: viewModel.isConnected,
+                        onValueChanged: { updatedSlider in
+                            viewModel.sendControlChange(for: updatedSlider)
+                        },
+                        onDelete: {
+                            viewModel.removeSlider(id: slider.id)
                         }
-                    }
-
-                    Slider(value: $viewModel.ccValue, in: 0...127, step: 1)
-                        .disabled(!viewModel.isConnected)
+                    )
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 12, leading: 24, bottom: 12, trailing: 24))
                 }
 
-                Spacer()
+                Button {
+                    viewModel.addSlider()
+                } label: {
+                    Label("Add Slider", systemImage: "plus")
+                        .font(.subheadline)
+                }
+                .listRowSeparator(.hidden)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 8)
             }
-            .padding(24)
+            .listStyle(.plain)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -52,9 +52,6 @@ struct ContentView: View {
             }
             .sheet(isPresented: $showBluetoothSheet) {
                 BluetoothConnectionSheet(viewModel: viewModel)
-            }
-            .sheet(isPresented: $showSliderSettings) {
-                CCSliderSettingsSheet(viewModel: viewModel)
             }
         }
     }

@@ -6,20 +6,40 @@
 import SwiftUI
 
 struct CCSliderSettingsSheet: View {
-    @Bindable var viewModel: BLEMIDIViewModel
+    @Binding var slider: CCSliderConfig
+    var onDelete: () -> Void
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Label") {
-                    TextField("Name", text: $viewModel.ccLabelName)
+                    TextField("Name", text: $slider.labelName)
                 }
 
                 Section("MIDI") {
-                    Picker("Channel", selection: $viewModel.ccChannel) {
+                    Picker("Channel", selection: $slider.channel) {
                         ForEach(1...16, id: \.self) { channel in
                             Text("\(channel)").tag(channel)
+                        }
+                    }
+
+                    Picker("CC Number", selection: $slider.ccNumber) {
+                        ForEach(1...127, id: \.self) { cc in
+                            Text("\(cc)").tag(cc)
+                        }
+                    }
+                }
+
+                Section {
+                    Button(role: .destructive) {
+                        dismiss()
+                        onDelete()
+                    } label: {
+                        HStack {
+                            Spacer()
+                            Text("Delete Slider")
+                            Spacer()
                         }
                     }
                 }
@@ -37,8 +57,4 @@ struct CCSliderSettingsSheet: View {
         .presentationDetents([.medium])
         .presentationDragIndicator(.visible)
     }
-}
-
-#Preview {
-    CCSliderSettingsSheet(viewModel: BLEMIDIViewModel())
 }
