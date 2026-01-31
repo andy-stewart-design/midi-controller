@@ -13,16 +13,15 @@ struct BluetoothConnectionSheet: View {
         NavigationStack {
             VStack(spacing: 32) {
                 // Status indicator
-                VStack(spacing: 8) {
+                HStack(spacing: 8) {
                     Image(systemName: viewModel.statusIcon)
-                        .font(.system(size: 48))
                         .foregroundStyle(viewModel.statusColor)
 
                     Text(viewModel.statusText)
                         .font(.headline)
                         .foregroundStyle(.secondary)
                 }
-                .padding(.top, 24)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 Divider()
 
