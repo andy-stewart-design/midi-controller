@@ -46,6 +46,7 @@ struct ContentView: View {
                         showBluetoothSheet = true
                     } label: {
                         Image(systemName: viewModel.statusIcon)
+                            .font(.system(size: 14))
                             .foregroundStyle(viewModel.statusColor)
                     }
                 }
