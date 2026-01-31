@@ -5,6 +5,7 @@
 
 import CoreBluetooth
 import Foundation
+import SwiftUI
 
 /// ViewModel that bridges BLE MIDI manager to SwiftUI
 @Observable
@@ -45,6 +46,30 @@ final class BLEMIDIViewModel {
             return "Unsupported"
         default:
             return "Unknown"
+        }
+    }
+
+    var statusIcon: String {
+        if isConnected {
+            return "link"
+        } else if isAdvertising {
+            return "dot.radiowaves.left.and.right"
+        } else if isBluetoothReady {
+            return "dot.radiowaves.left.and.right"
+        } else {
+            return "exclamationmark.triangle"
+        }
+    }
+
+    var statusColor: Color {
+        if isConnected {
+            return .green
+        } else if isAdvertising {
+            return .blue
+        } else if isBluetoothReady {
+            return .primary
+        } else {
+            return .red
         }
     }
 
