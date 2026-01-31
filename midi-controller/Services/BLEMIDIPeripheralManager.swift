@@ -31,6 +31,7 @@ final class BLEMIDIPeripheralManager: NSObject {
 
     weak var delegate: BLEMIDIPeripheralManagerDelegate?
 
+    private let bleQueue = DispatchQueue(label: "com.midi-controller.ble", qos: .userInitiated)
     private var peripheralManager: CBPeripheralManager?
     private var midiCharacteristic: CBMutableCharacteristic?
     private var connectedCentrals: [UUID: CBCentral] = [:]
@@ -50,7 +51,7 @@ final class BLEMIDIPeripheralManager: NSObject {
 
     override init() {
         super.init()
-        peripheralManager = CBPeripheralManager(delegate: self, queue: nil)
+        peripheralManager = CBPeripheralManager(delegate: self, queue: bleQueue)
     }
 
     /// Starts advertising as a BLE MIDI peripheral
