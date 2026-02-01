@@ -7,7 +7,6 @@ import SwiftUI
 
 struct CCSliderView: View {
     @Binding var slider: CCSliderConfig
-    var isConnected: Bool
     var onValueChanged: (CCSliderConfig) -> Void
     var onDelete: () -> Void
 
@@ -29,10 +28,10 @@ struct CCSliderView: View {
                         .foregroundStyle(.foreground)
                         .opacity(0.6)
                 }
+                .buttonStyle(.borderless)
             }
 
             Slider(value: $slider.value, in: 0...127, step: 1)
-                .disabled(!isConnected)
                 .onChange(of: slider.value) { _, _ in
                     onValueChanged(slider)
                 }

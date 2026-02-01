@@ -17,7 +17,6 @@ struct ContentView: View {
                 ForEach($viewModel.sliders) { $slider in
                     CCSliderView(
                         slider: $slider,
-                        isConnected: viewModel.isConnected,
                         onValueChanged: { updatedSlider in
                             viewModel.sendControlChange(for: updatedSlider)
                         },
