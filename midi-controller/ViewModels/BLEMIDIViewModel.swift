@@ -5,6 +5,7 @@
 
 import CoreBluetooth
 import Foundation
+import SwiftData
 import SwiftUI
 
 /// ViewModel that bridges BLE MIDI manager to SwiftUI
@@ -20,9 +21,10 @@ final class BLEMIDIViewModel {
         connectionCount > 0
     }
 
-    var sliders: [CCSliderConfig] = [CCSliderConfig()]
+    var sliders: [CCSliderConfig] = []
 
     private let bleManager: BLEMIDIPeripheralManager
+    private var modelContext: ModelContext?
 
     var isBluetoothReady: Bool {
         bluetoothState == .poweredOn
@@ -82,6 +84,71 @@ final class BLEMIDIViewModel {
         bleManager.delegate = self
     }
 
+    func configure(with modelContext: ModelContext) {
+        self.modelContext = modelContext
+        loadSliders()
+    }
+
+    private func loadSliders() {
+        guard let modelContext else { return }
+
+        let descriptor = FetchDescriptor<CCSliderConfigEntity>(
+            sortBy: [SortDescriptor(\.sortOrder)]
+        )
+
+        do {
+            let entities = try modelContext.fetch(descriptor)
+            if entities.isEmpty {
+                let defaultSlider = CCSliderConfig()
+                sliders = [defaultSlider]
+                saveSlider(defaultSlider, at: 0)
+            } else {
+                sliders = entities.map { CCSliderConfig(from: $0) }
+            }
+        } catch {
+            print("Failed to load sliders: \(error)")
+            sliders = [CCSliderConfig()]
+        }
+    }
+
+    private func saveSlider(_ slider: CCSliderConfig, at index: Int) {
+        guard let modelContext else { return }
+
+        let entity = CCSliderConfigEntity(
+            id: slider.id,
+            labelName: slider.labelName,
+            channel: slider.channel,
+            ccNumber: slider.ccNumber,
+            value: slider.value,
+            sortOrder: index
+        )
+        modelContext.insert(entity)
+
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to save slider: \(error)")
+        }
+    }
+
+    func updateSlider(_ slider: CCSliderConfig) {
+        guard let modelContext else { return }
+
+        let sliderId = slider.id
+        let descriptor = FetchDescriptor<CCSliderConfigEntity>(
+            predicate: #Predicate { $0.id == sliderId }
+        )
+
+        do {
+            if let entity = try modelContext.fetch(descriptor).first {
+                slider.update(entity)
+                try modelContext.save()
+            }
+        } catch {
+            print("Failed to update slider: \(error)")
+        }
+    }
+
     func toggleAdvertising() {
         if isAdvertising {
             bleManager.stopAdvertising()
@@ -109,10 +176,29 @@ final class BLEMIDIViewModel {
             ccNumber: 1
         )
         sliders.append(newSlider)
+        saveSlider(newSlider, at: sliders.count - 1)
     }
 
     func removeSlider(id: UUID) {
         sliders.removeAll { $0.id == id }
+        deleteSlider(id: id)
+    }
+
+    private func deleteSlider(id: UUID) {
+        guard let modelContext else { return }
+
+        let descriptor = FetchDescriptor<CCSliderConfigEntity>(
+            predicate: #Predicate { $0.id == id }
+        )
+
+        do {
+            if let entity = try modelContext.fetch(descriptor).first {
+                modelContext.delete(entity)
+                try modelContext.save()
+            }
+        } catch {
+            print("Failed to delete slider: \(error)")
+        }
     }
 }
 

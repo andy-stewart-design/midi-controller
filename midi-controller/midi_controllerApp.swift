@@ -5,6 +5,7 @@
 //  Created by Andy Stewart on 1/26/26.
 //
 
+import SwiftData
 import SwiftUI
 
 @main
@@ -13,5 +14,6 @@ struct midi_controllerApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: CCSliderConfigEntity.self)
     }
 }

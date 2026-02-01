@@ -25,4 +25,19 @@ struct CCSliderConfig: Identifiable {
         self.ccNumber = ccNumber
         self.value = value
     }
+
+    init(from entity: CCSliderConfigEntity) {
+        self.id = entity.id
+        self.labelName = entity.labelName
+        self.channel = entity.channel
+        self.ccNumber = entity.ccNumber
+        self.value = entity.value
+    }
+
+    func update(_ entity: CCSliderConfigEntity) {
+        entity.labelName = labelName
+        entity.channel = channel
+        entity.ccNumber = ccNumber
+        entity.value = value
+    }
 }

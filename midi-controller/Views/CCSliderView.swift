@@ -8,6 +8,7 @@ import SwiftUI
 struct CCSliderView: View {
     @Binding var slider: CCSliderConfig
     var onValueChanged: (CCSliderConfig) -> Void
+    var onSettingsChanged: (CCSliderConfig) -> Void
     var onDelete: () -> Void
 
     @State private var showSettings = false
@@ -38,6 +39,11 @@ struct CCSliderView: View {
         }
         .sheet(isPresented: $showSettings) {
             CCSliderSettingsSheet(slider: $slider, onDelete: onDelete)
+        }
+        .onChange(of: showSettings) { wasShowing, isShowing in
+            if wasShowing && !isShowing {
+                onSettingsChanged(slider)
+            }
         }
     }
 }

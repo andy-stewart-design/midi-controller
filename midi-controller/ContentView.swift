@@ -5,9 +5,11 @@
 //  Created by Andy Stewart on 1/26/26.
 //
 
+import SwiftData
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(\.modelContext) private var modelContext
     @State private var viewModel = BLEMIDIViewModel()
     @State private var showBluetoothSheet = false
 
@@ -19,6 +21,10 @@ struct ContentView: View {
                         slider: $slider,
                         onValueChanged: { updatedSlider in
                             viewModel.sendControlChange(for: updatedSlider)
+                            viewModel.updateSlider(updatedSlider)
+                        },
+                        onSettingsChanged: { updatedSlider in
+                            viewModel.updateSlider(updatedSlider)
                         },
                         onDelete: {
                             viewModel.removeSlider(id: slider.id)
@@ -52,6 +58,9 @@ struct ContentView: View {
             }
             .sheet(isPresented: $showBluetoothSheet) {
                 BluetoothConnectionSheet(viewModel: viewModel)
+            }
+            .onAppear {
+                viewModel.configure(with: modelContext)
             }
         }
     }
