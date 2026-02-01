@@ -7,8 +7,8 @@ import SwiftUI
 
 struct CCSliderView: View {
     @Binding var slider: CCSliderConfig
-    var isConnected: Bool
     var onValueChanged: (CCSliderConfig) -> Void
+    var onSettingsChanged: (CCSliderConfig) -> Void
     var onDelete: () -> Void
 
     @State private var showSettings = false
@@ -29,16 +29,23 @@ struct CCSliderView: View {
                         .foregroundStyle(.foreground)
                         .opacity(0.6)
                 }
+                .buttonStyle(.borderless)
             }
 
             Slider(value: $slider.value, in: 0...127, step: 1)
-                .disabled(!isConnected)
+                .padding(.vertical, 8)
+                .gesture(DragGesture(minimumDistance: 0))
                 .onChange(of: slider.value) { _, _ in
                     onValueChanged(slider)
                 }
         }
         .sheet(isPresented: $showSettings) {
             CCSliderSettingsSheet(slider: $slider, onDelete: onDelete)
+        }
+        .onChange(of: showSettings) { wasShowing, isShowing in
+            if wasShowing && !isShowing {
+                onSettingsChanged(slider)
+            }
         }
     }
 }
