@@ -33,6 +33,8 @@ struct CCSliderView: View {
             }
 
             Slider(value: $slider.value, in: 0...127, step: 1)
+                .padding(.vertical, 8)
+                .gesture(DragGesture(minimumDistance: 0))
                 .onChange(of: slider.value) { _, _ in
                     onValueChanged(slider)
                 }

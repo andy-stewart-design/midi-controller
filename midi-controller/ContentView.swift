@@ -45,6 +45,7 @@ struct ContentView: View {
                 .padding(.top, 8)
             }
             .listStyle(.plain)
+            .scrollDisabled(true)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
